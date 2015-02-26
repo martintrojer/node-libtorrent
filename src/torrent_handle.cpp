@@ -51,6 +51,8 @@ namespace nodelt {
       FunctionTemplate::New(get_torrent_info)->GetFunction());
     tpl->PrototypeTemplate()->Set(String::NewSymbol("set_metadata"),
       FunctionTemplate::New(set_metadata)->GetFunction());
+    tpl->PrototypeTemplate()->Set(String::NewSymbol("has_metadata"),
+      FunctionTemplate::New(has_metadata)->GetFunction());
     tpl->PrototypeTemplate()->Set(String::NewSymbol("is_valid"),
       FunctionTemplate::New(is_valid)->GetFunction());
     tpl->PrototypeTemplate()->Set(String::NewSymbol("pause"),
@@ -358,7 +360,7 @@ namespace nodelt {
 
   Handle<Value> TorrentHandleWrap::get_torrent_info(const Arguments& args) {
     HandleScope scope;
-    libtorrent::torrent_info ti = TorrentHandleWrap::Unwrap(args.This())->get_torrent_info();
+    libtorrent::torrent_info ti = *TorrentHandleWrap::Unwrap(args.This())->torrent_file().get();
     return scope.Close(TorrentInfoWrap::New(ti));
   };
 
@@ -374,6 +376,12 @@ namespace nodelt {
     HandleScope scope;
     return scope.Close(Boolean::New(
       TorrentHandleWrap::Unwrap(args.This())->is_valid()));
+  };
+  
+  Handle<Value> TorrentHandleWrap::has_metadata(const Arguments& args) {
+    HandleScope scope;
+    return scope.Close(Boolean::New(
+      TorrentHandleWrap::Unwrap(args.This())->has_metadata()));
   };
 
   Handle<Value> TorrentHandleWrap::pause(const Arguments& args) {
@@ -565,7 +573,6 @@ namespace nodelt {
     for (std::vector<int>::iterator i(f.begin()), e(f.end()); i != e; ++i)
       ret->Set(ret->Length(), Integer::New(*i));
     return scope.Close(ret);
-    return scope.Close(Undefined());
   };
 
   Handle<Value> TorrentHandleWrap::file_priority(const Arguments& args) {
